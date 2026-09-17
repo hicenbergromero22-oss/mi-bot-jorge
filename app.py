@@ -11,7 +11,7 @@ def cerebro(m):
             "https://api.groq.com/openai/v1/chat/completions",
             headers={"Authorization": f"Bearer {k}", "Content-Type": "application/json"},
             json={
-                "model":"llama-3.1-8b-instant",
+            "model":"llama-3.3-70b-versatile",
                 "messages":[
                     {"role":"system","content":"Eres Bot Jorge V6, mexicano barrio, buena onda, corto y claro."},
                     {"role":"user","content":m}
