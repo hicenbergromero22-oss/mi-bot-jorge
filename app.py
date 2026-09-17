@@ -1,62 +1,54 @@
-from flask import Flask, request
+from flask import Flask, request, session
 import random
-from datetime import datetime
 
 app = Flask(__name__)
+app.secret_key = 'jorge123' # Clave para que recuerde el juego
 
-chistes = [
-    "¿Por qué el programador cruzó la calle? ¡Para llegar al otro commit!",
-    "Mi código no tiene bugs, tiene funciones ocultas.",
-    "¿Qué hace una abeja en GitHub? Hace buzz requests."
+frases_ligue = [
+    "Dile: 'Jaja, aburrido yo? Espérate a conocerme bien y me ruegas que me vaya 😏'",
+    "Dile: 'Uy perdón, estaba pensando en que decirte para impresionarte y se me fue el tiempo'",
+    "Dile: 'Aburrido? Yo soy el premio mayor, tú te lo pierdes'",
+    "Respuesta pro: 'Jajaja te pasas, ¿qué andas haciendo que andas tan aburrida?' (Le cambias el tema)",
+    "Respuesta tierna: 'No soy aburrido, solo me pongo nervioso contigo'"
 ]
 
 @app.route('/')
 def home():
+    nombre = request.args.get('nombre', 'Crack')
     edad = request.args.get('edad')
-    nombre = request.args.get('nombre')
+    numero = request.args.get('juego')
+    ligar = request.args.get('ligar')
 
-    # Si no hay nada, muestra el menu principal
-    if not edad and not nombre:
-        return f"""
-        <body style="font-family: sans-serif; background: #111; color: white; text-align: center; padding: 30px;">
-            <h1 style="font-size: 50px;">🤖</h1>
-            <h1>Bot de Jorge V2</h1>
-            <p style="color: #aaa;">Estoy en desarrollo</p>
-            <br>
-            <div style="background: #222; padding: 20px; border-radius: 20px; max-width: 350px; margin: auto;">
-                <h3>Pruebame:</h3>
-                <a href="?edad=29" style="background: #00c853; color: white; padding: 12px 20px; border-radius: 30px; text-decoration: none; display: block; margin: 10px;">¿Soy mayor con 29 años?</a>
-                <a href="?nombre=Jorge" style="background: #2196F3; color: white; padding: 12px 20px; border-radius: 30px; text-decoration: none; display: block; margin: 10px;">Saludame: Jorge</a>
-                <a href="?nombre=Jorge&edad=22" style="background: #9C27B0; color: white; padding: 12px 20px; border-radius: 30px; text-decoration: none; display: block; margin: 10px;">Todo junto</a>
-            </div>
-            <br>
-            <p style="color: #555;">Hora del server: {datetime.now().strftime('%H:%M:%S')}</p>
-            <p style="color: #555;">Chiste random: {random.choice(chistes)}</p>
-            <br>
-            <p style="color: #333;">Creado por Jorge - 2026</p>
-        </body>
-        """
-
-    # Si hay nombre y edad
-    saludo = f"Hola {nombre}!" if nombre else "Hola!"
+    # --- LÓGICA DEL JUEGO ---
+    if 'numero_secreto' not in session:
+        session['numero_secreto'] = random.randint(1, 100)
     
-    if edad:
-        es_mayor = int(edad) >= 18
-        color = "#00c853" if es_mayor else "#ff1744"
-        mensaje = "eres MAYOR ✅" if es_mayor else "eres MENOR ❌"
-        texto_edad = f"Tienes {edad} años, {mensaje}"
-    else:
-        color = "#2196F3"
-        texto_edad = "No me dijiste tu edad"
+    mensaje_juego = ""
+    if numero:
+        try:
+            num = int(numero)
+            secreto = session['numero_secreto']
+            if num == secreto:
+                mensaje_juego = f"¡LE ATINASTE! Era el {secreto} 🎉🎉 Jugamos de nuevo, ya puse otro número."
+                session['numero_secreto'] = random.randint(1, 100)
+            elif num < secreto:
+                mensaje_juego = f"El {num} es muy BAJO, súbele más 👆"
+            else:
+                mensaje_juego = f"El {num} es muy ALTO, bájale 👇"
+        except:
+            mensaje_juego = "Pon un número del 1 al 100"
 
+    # --- LÓGICA DEL LIGUE ---
+    mensaje_ligue = ""
+    if ligar is not None:
+        mensaje_ligue = random.choice(frases_ligue)
+
+    # --- HTML ---
     return f"""
-    <body style="font-family: sans-serif; background: {color}; color: white; text-align: center; padding: 50px;">
-        <h1>{saludo}</h1>
-        <h1 style="font-size: 35px;">{texto_edad}</h1>
-        <br>
-        <a href="/" style="background: white; color: {color}; padding: 15px 30px; text-decoration: none; border-radius: 30px; font-weight: bold;">Volver al inicio</a>
-    </body>
-    """
+    <body style="font-family: sans-serif; background: #0f0f0f; color: white; text-align: center; padding: 20px;">
+        <h1>🤖 Bot de Jorge V3.0</h1>
+        <p style="color: #aaa;">Hola {nombre}!</p>
 
-if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=10000)
+        <div style="background: #1e1e1e; padding: 20px; border-radius: 20px; max-width: 400px; margin: 20px auto; border: 1px solid #333;">
+            <h2>🎮 Adivina el número (1-100)</h2>
+            <p style="color: #00ff88; font-weight: bold;
