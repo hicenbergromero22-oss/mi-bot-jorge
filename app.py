@@ -1,54 +1,38 @@
-from flask import Flask, request, session
-import random
+from flask import Flask, request
+import requests, random
 
 app = Flask(__name__)
-app.secret_key = 'jorge123' # Clave para que recuerde el juego
 
-frases_ligue = [
-    "Dile: 'Jaja, aburrido yo? Espérate a conocerme bien y me ruegas que me vaya 😏'",
-    "Dile: 'Uy perdón, estaba pensando en que decirte para impresionarte y se me fue el tiempo'",
-    "Dile: 'Aburrido? Yo soy el premio mayor, tú te lo pierdes'",
-    "Respuesta pro: 'Jajaja te pasas, ¿qué andas haciendo que andas tan aburrida?' (Le cambias el tema)",
-    "Respuesta tierna: 'No soy aburrido, solo me pongo nervioso contigo'"
-]
+# CEREBRO GRATIS SIN API KEY (Usa una IA libre)
+def cerebro_ia(texto_del_usuario):
+    try:
+        # Usamos una IA gratis
+        url = "https://api.affiliateplus.xyz/api/chatbot"
+        params = {
+            "message": texto_del_usuario,
+            "botname": "Jorge Bot",
+            "ownername": "Jorge",
+            "user": "1"
+        }
+        r = requests.get(url, params=params, timeout=10).json()
+        return r.get("message", "No entendí, repite")
+    except:
+        # Si falla la IA, entra el respaldo
+        return random.choice([
+            f"Para '{texto_del_usuario}' dile: 'jajaja alv neta? no te creo'",
+            "Dile: 'Uy, me dejaste pensando... tú siempre tan misteriosa'",
+            "Contesta: 'Jaja te pasas, ¿y luego qué le dijiste?'"
+        ])
 
 @app.route('/')
 def home():
+    q = request.args.get('q')
     nombre = request.args.get('nombre', 'Crack')
-    edad = request.args.get('edad')
-    numero = request.args.get('juego')
-    ligar = request.args.get('ligar')
 
-    # --- LÓGICA DEL JUEGO ---
-    if 'numero_secreto' not in session:
-        session['numero_secreto'] = random.randint(1, 100)
-    
-    mensaje_juego = ""
-    if numero:
-        try:
-            num = int(numero)
-            secreto = session['numero_secreto']
-            if num == secreto:
-                mensaje_juego = f"¡LE ATINASTE! Era el {secreto} 🎉🎉 Jugamos de nuevo, ya puse otro número."
-                session['numero_secreto'] = random.randint(1, 100)
-            elif num < secreto:
-                mensaje_juego = f"El {num} es muy BAJO, súbele más 👆"
-            else:
-                mensaje_juego = f"El {num} es muy ALTO, bájale 👇"
-        except:
-            mensaje_juego = "Pon un número del 1 al 100"
-
-    # --- LÓGICA DEL LIGUE ---
-    mensaje_ligue = ""
-    if ligar is not None:
-        mensaje_ligue = random.choice(frases_ligue)
-
-    # --- HTML ---
-    return f"""
-    <body style="font-family: sans-serif; background: #0f0f0f; color: white; text-align: center; padding: 20px;">
-        <h1>🤖 Bot de Jorge V3.0</h1>
-        <p style="color: #aaa;">Hola {nombre}!</p>
-
-        <div style="background: #1e1e1e; padding: 20px; border-radius: 20px; max-width: 400px; margin: 20px auto; border: 1px solid #333;">
-            <h2>🎮 Adivina el número (1-100)</h2>
-            <p style="color: #00ff88; font-weight: bold;
+    if not q:
+        return f"""
+        <body style="background:#0a0a0a;color:white;font-family:sans-serif;text-align:center;padding:30px;">
+            <h1>🧠 BOT JORGE V5 - CON CEREBRO</h1>
+            <p>Hola {nombre}, ya respondo a LO QUE SEA</p>
+            <div style="background:#1a1a1a;padding:20px;border-radius:20px;max-width:500px;margin:auto;">
+               
