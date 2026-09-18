@@ -57,7 +57,43 @@ def chat():
 @app.route('/peliculas')
 def pelis():
     return MENU.replace("Elige que quieres hacer", "Buscador de Pelis - ya casi queda")
-
+@app.route('/cnc', methods=['GET', 'POST'])
+def cnc():
+    gcode = ""
+    if request.method == 'POST':
+        desc = request.form.get('descripcion','')
+        gcode = f"""%
+O1001 ({desc.upper()} - FANUC MM)
+G21 G40 G49 G80 G90
+G17 G54
+T01 M06
+G00 X0 Y0
+G43 H01 Z50.
+M03 S1500 M08
+G00 Z5.
+G01 Z-5. F100
+G01 X100. F250
+Y50.
+X0
+Y0
+G00 Z50.
+M09
+M05
+G28 X0 Y0
+M30
+%
+"""
+    return render_template_string(CSS + f"""
+    <h1>⚙️ CNC FANUC mm</h1>
+    <div class="card">
+        <form method="POST">
+            <input name="descripcion" placeholder="Ej: Placa 120x60 4 barrenos 8mm" required>
+            <button class="btn" style="background:#00b894" type="submit">Generar</button>
+        </form>
+        {"<textarea style='width:90%;height:300px;background:#000;color:#0f0;padding:15px'>"+gcode+"</textarea>" if gcode else ""}
+    </div>
+    <a class="btn" href="/" style="background:#333">⬅️ Volver</a>
+    """)
 @app.route('/cine')
 def cine():
     return render_template_string(CSS + """
