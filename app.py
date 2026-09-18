@@ -51,7 +51,7 @@ def descargar():
     <a class="btn" href="/" style="background:#333">⬅️ Volver</a>
     """)
 
-# --- 2. CNC FANUC MM ---
+--- 2. CNC FANUC MM ---
 @app.route('/cnc', methods=['GET', 'POST'])
 def cnc():
     gcode = ""
@@ -91,7 +91,6 @@ M30
     </div>
     <a class="btn" href="/" style="background:#333">⬅️ Volver</a>
     """)
-
 # --- 3. WHATSAPP ---
 @app.route('/whatsapp', methods=['GET', 'POST'])
 def whatsapp():
