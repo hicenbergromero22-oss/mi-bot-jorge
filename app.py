@@ -17,13 +17,12 @@ textarea{width:90%;height:300px;background:#000;color:#0f0;padding:10px;border-r
 @app.route('/')
 def home():
     return render_template_string(CSS + """
-    <h1>🤖 Bot de Jorge - V5 FINAL</h1>
+    <h1>Bot de Jorge - V5.1 FIX</h1>
     <div class="card">
-        <a class="btn" style="background:#e84393" href="/tiktok">⬇️ TikTok HD</a>
-        <a class="btn" style="background:#ff0000" href="/youtube">⬇️ YouTube / Insta</a>
-        <a class="btn" style="background:#00b894" href="/cnc">⚙️ CNC con Foto</a>
+        <a class="btn" style="background:#e84393" href="/tiktok">TikTok HD</a>
+        <a class="btn" style="background:#ff0000" href="/youtube">YouTube / Insta</a>
+        <a class="btn" style="background:#00b894" href="/cnc">CNC con Foto</a>
     </div>
-    <p style="color:#aaa;font-size:12px">V5 - TikTok por API (no falla) + YouTube por yt-dlp</p>
     """)
 
 @app.route('/tiktok', methods=['GET','POST'])
@@ -44,15 +43,15 @@ def tiktok():
                         for c in v.iter_content(1024*1024): f.write(c)
                     return send_file(out, as_attachment=True, download_name="tiktok_hd.mp4")
                 else:
-                    msg=f"No se pudo leer ese link. Prueba con otro. Resp: {str(r)[:200]}"
+                    msg="No se pudo leer ese link."
             except Exception as e:
                 msg=f"Error: {e}"
-    return render_template_string(CSS+"""
-    <h1>⬇️ TikTok HD Sin Marca</h1>
+    return render_template_string(CSS+f"""
+    <h1>TikTok HD Sin Marca</h1>
     <div class="card"><form method="POST"><input name="url" placeholder="Pega link TikTok" required>
-    <button class="btn" style="background:#e84393" type="submit">Bajar HD</button></form><p style="color:#ff7675">{{msg}}</p></div>
+    <button class="btn" style="background:#e84393" type="submit">Bajar HD</button></form><p style="color:#ff7675">{msg}</p></div>
     <a class="btn" href="/" style="background:#333">Volver</a>
-    """,msg=msg)
+    """)
 
 @app.route('/youtube', methods=['GET','POST'])
 def youtube():
@@ -69,12 +68,12 @@ def youtube():
                 return send_file(fname, as_attachment=True, download_name="video.mp4")
             except Exception as e:
                 msg=f"Error: {e}"
-    return render_template_string(CSS+"""
-    <h1>⬇️ YouTube / Instagram / FB</h1>
-    <div class="card"><form method="POST"><input name="url" placeholder="Pega link YouTube, Insta, FB" required>
-    <button class="btn" style="background:#ff0000" type="submit">Descargar</button></form><p style="color:#ff7675">{{msg}}</p></div>
+    return render_template_string(CSS+f"""
+    <h1>YouTube / Instagram / FB</h1>
+    <div class="card"><form method="POST"><input name="url" placeholder="Pega link" required>
+    <button class="btn" style="background:#ff0000" type="submit">Descargar</button></form><p style="color:#ff7675">{msg}</p></div>
     <a class="btn" href="/" style="background:#333">Volver</a>
-    """,msg=msg)
+    """)
 
 @app.route('/cnc', methods=['GET','POST'])
 def cnc():
@@ -85,17 +84,32 @@ def cnc():
         if f and f.filename:
             img=Image.open(f.stream); buf=io.BytesIO(); img.save(buf,format="JPEG")
             img_b64=base64.b64encode(buf.getvalue()).decode()
-        gcode=f"""%
-O1001 ({desc_txt.upper()})
-(PLANO CARGADO: SI)
-G21 G40 G49 G80 G90 G17 G54
-T01 M06 (FRESA 6MM - DESBASTE)
-G00 X0 Y0 Z50.
-M03 S1800 M08
-G00 Z5. F400
-G01 Z-2. F200
-G01 X100. F300
-Y60.
-X0
-Y0
-G00 Z50. M05 M09
+        # AQUI ESTABA LA FALLA - YA ESTA ARREGLADO SIN F-STRING TRIPLE
+        gcode = "%\n"
+        gcode += "O1001 (" + desc_txt.upper() + ")\n"
+        gcode += "G21 G40 G49 G80 G90 G17 G54\n"
+        gcode += "T01 M06 (FRESA 6MM)\n"
+        gcode += "G00 X0 Y0 Z50.\n"
+        gcode += "M03 S1800 M08\n"
+        gcode += "G00 Z5. F400\n"
+        gcode += "G01 Z-2. F200\n"
+        gcode += "G01 X100. F300\n"
+        gcode += "Y60.\n"
+        gcode += "X0 Y0\n"
+        gcode += "G00 Z50. M05 M09\n"
+        gcode += "M30\n%\n"
+        
+    return render_template_string(CSS+f"""
+    <h1>CNC con Foto</h1>
+    <div class="card">
+        <form method="POST" enctype="multipart/form-data">
+            <input name="descripcion" placeholder="Ej: Placa 100x60" value="{desc_txt}" required>
+            <input type="file" name="plano" accept="image/*">
+            <button class="btn" style="background:#00b894" type="submit">Generar G-CODE</button>
+        </form>
+    </div>
+    <a class="btn" href="/" style="background:#333">Volver</a>
+    """)
+
+if __name__=='__main__':
+    app.run()
