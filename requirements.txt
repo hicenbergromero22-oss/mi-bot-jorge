@@ -1,6 +1,4 @@
-flask
-requests
-gunicorn
+Flask
 yt-dlp
-Pillow
-pytesseract
+gunicorn
+Pillow 
