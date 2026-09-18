@@ -1,7 +1,6 @@
 from flask import Flask, request, render_template_string, send_file
-import os, base64, yt_dlp
+import os, requests, base64, io
 from PIL import Image
-import io
 
 app = Flask(__name__)
 
@@ -17,13 +16,7 @@ textarea{width:90%;height:280px;background:#000;color:#0f0;padding:10px;border-r
 
 @app.route('/')
 def home():
-    return render_template_string(CSS + """
-    <h1>🤖 Bot de Jorge - LIVE</h1>
-    <div class="card">
-        <a class="btn" style="background:#e84393" href="/tiktok">⬇️ TikTok</a>
-        <a class="btn" style="background:#00b894" href="/cnc">⚙️ CNC con Foto</a>
-    </div>
-    """)
+    return render_template_string(CSS + "<h1>🤖 Bot de Jorge - V3</h1><div class='card'><a class='btn' style='background:#e84393' href='/tiktok'>⬇️ TikTok</a><a class='btn' style='background:#00b894' href='/cnc'>⚙️ CNC con Foto</a></div>")
 
 @app.route('/tiktok', methods=['GET','POST'])
 def tiktok():
@@ -32,15 +25,28 @@ def tiktok():
         url = request.form.get('url','').strip()
         if url:
             try:
-                out = "/tmp/video.mp4"
-                ydl_opts = {'outtmpl': out, 'format': 'mp', 'quiet': True, 'noplaylist': True}
-                with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-                    ydl.download([url])
-                return send_file(out, as_attachment=True, download_name="tiktok.mp4")
+                # API que no usa yt-dlp
+                api_url = "https://www.tikwm.com/api/"
+                data = {"url": url, "count": 12, "cursor": 0, "web": 1, "hd": 1}
+                headers = {"User-Agent": "Mozilla/5.0", "Content-Type": "application/x-www-form-urlencoded"}
+                r = requests.post(api_url, data=data, headers=headers, timeout=20).json()
+                
+                if r.get('data') and r['data'].get('play'):
+                    video_url = r['data']['play']
+                    # baja el video
+                    v = requests.get(video_url, headers={"User-Agent":"Mozilla/5.0"}, stream=True, timeout=30)
+                    out = "/tmp/tiktok.mp4"
+                    with open(out, 'wb') as f:
+                        for chunk in v.iter_content(1024*1024):
+                            f.write(chunk)
+                    return send_file(out, as_attachment=True, download_name="tiktok.mp4")
+                else:
+                    msg = f"API dijo: {str(r)[:200]}"
             except Exception as e:
-                msg = f"Error: {str(e)[:200]}"
+                msg = f"Error API: {e}"
+
     return render_template_string(CSS + """
-    <h1>⬇️ TikTok</h1>
+    <h1>⬇️ TikTok V3 - Sin yt-dlp</h1>
     <div class="card">
         <form method="POST"><input name="url" placeholder="Pega link TikTok" required>
         <button class="btn" style="background:#e84393" type="submit">Descargar</button></form>
@@ -51,49 +57,25 @@ def tiktok():
 
 @app.route('/cnc', methods=['GET','POST'])
 def cnc():
-    gcode = ""
-    img_b64 = ""
+    gcode=""; img_b64=""
     if request.method == 'POST':
-        desc = request.form.get('descripcion','PLACA 100x60')
-        f = request.files.get('plano')
+        desc=request.form.get('descripcion','PLACA')
+        f=request.files.get('plano')
         if f and f.filename:
-            img = Image.open(f.stream)
-            # convertimos a base64 para mostrarla sin guardarla en Render
-            buffered = io.BytesIO()
-            img.save(buffered, format="JPEG")
-            img_b64 = base64.b64encode(buffered.getvalue()).decode()
-
-        gcode = f"""%
-O1001 ({desc})
-G21 G40 G49 G80 G90
-G17 G54
-T01 M06 (FRESA 6MM)
-G00 X0 Y0 Z50.
-M03 S1500 M08
-G00 Z5. F300
-G01 Z-2. F150
-G01 X100. Y0
-Y60.
-X0
-Y0
-G00 Z50.
-M05 M09
-M30
-%
-( PLANO: {desc} )
-"""
-
+            img=Image.open(f.stream)
+            buf=io.BytesIO(); img.save(buf,format="JPEG")
+            img_b64=base64.b64encode(buf.getvalue()).decode()
+        gcode=f"%\\nO1001 ({desc})\\nG21 G90\\nG00 X0 Y0\\nM30\\n%"
     return render_template_string(CSS + """
-    <h1>⚙️ CNC + Foto</h1>
+    <h1>⚙️ CNC con Foto</h1>
     <div class="card">
         <form method="POST" enctype="multipart/form-data">
-            <input name="descripcion" placeholder="Ej: Placa 100x60 4 barrenos 8mm" required>
+            <input name="descripcion" placeholder="Placa 100x60" required>
             <input type="file" name="plano" accept="image/*">
             <button class="btn" style="background:#00b894" type="submit">Generar</button>
         </form>
-        {% if img_b64 %}<img src="data:image/jpeg;base64,{{img_b64}}" style="width:100%;border-radius:10px;margin-top:15px">{% endif %}
-        {% if gcode %}<textarea id="c">{{gcode}}</textarea><br>
-        <button class="btn" style="background:#00b894" onclick="navigator.clipboard.writeText(document.getElementById('c').value)">📋 Copiar G-CODE</button>{% endif %}
+        {% if img_b64 %}<img src="data:image/jpeg;base64,{{img_b64}}" style="width:100%;margin-top:10px">{% endif %}
+        {% if gcode %}<textarea id="c">{{gcode}}</textarea>{% endif %}
     </div>
     <a class="btn" href="/" style="background:#333">Volver</a>
     """, gcode=gcode, img_b64=img_b64)
