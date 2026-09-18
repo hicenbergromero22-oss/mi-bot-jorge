@@ -1,23 +1,13 @@
-from flask import Flask, render_template_string
-app = Flask(__name__)
-
-HTML = """
-<html><head><meta name="viewport" content="width=device-width, initial-scale=1">
-<style>
-body{background:#111;color:#fff;font-family:Arial;text-align:center;padding:15px}
-.card{background:#222;border-radius:15px;padding:15px;margin:15px 0}
-button{padding:12px 20px;border:0;border-radius:10px;margin:5px;font-weight:bold}
-.red{background:#ff0040;color:#fff} .gray{background:#444;color:#fff} .white{background:#fff;color:#000}
-video{width:100%;border-radius:12px;background:#000}
-</style></head>
-<body>
-<h1>Mi Cine Hisense 📺</h1>
-<input type="file" id="f" accept="video/*" multiple>
-<video id="v" controls></video>
-
-<div class="card">
-<h3>Opciones</h3>
-<button class="red" onclick="v.requestFullscreen()">📺 Pantalla Completa</button>
-<button class="red" onclick="cast()">📡 Mandar a Hisense</button>
-<button class="gray" onclick="v.playbackRate=1">▶️ Normal</button>
-<button class="gray" onclick="v.playbackRate=1.
+@app.route('/')
+def inicio():
+    return """
+    <style>
+        body{background:#111;color:white;font-family:sans-serif;text-align:center;padding:20px}
+        .btn{display:block;background:#ff0040;color:white;padding:18px;margin:15px;border-radius:12px;text-decoration:none;font-size:18px;font-weight:bold}
+    </style>
+    <h1>Bot Jorge V7 🔥</h1>
+    <a class="btn" href="/chat">💬 Preguntar lo que sea</a>
+    <a class="btn" href="/descargar">📲 Descargar TikToks / Reels sin marca</a>
+    <a class="btn" href="/pelis">🎬 Buscar Películas</a>
+    <a class="btn" href="/cine" style="background:#333">📺 Mi Cine Hisense</a>
+    """
