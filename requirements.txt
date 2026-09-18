@@ -2,4 +2,4 @@ Flask
 yt-dlp
 gunicorn
 Pillow
-requests
+request
