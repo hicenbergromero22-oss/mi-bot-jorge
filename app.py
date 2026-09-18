@@ -56,7 +56,7 @@ def chat():
 
 @app.route('/peliculas')
 def pelis():
-    return MENU.replace("Elige que quieres hacer", "Buscador de Pelis - ya casi queda")
+    return MENU.replace("Elige que quieres hacer", "buscar la pelicula que sea")
 @app.route('/cnc', methods=['GET', 'POST'])
 def cnc():
     gcode = ""
@@ -94,6 +94,7 @@ M30
     </div>
     <a class="btn" href="/" style="background:#333">⬅️ Volver</a>
     """)
+    <a class="btn" href="/cnc" style="background:#00b894">⚙️ Generador CNC</a>
 @app.route('/cine')
 def cine():
     return render_template_string(CSS + """
